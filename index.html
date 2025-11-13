@@ -1,13 +1,71 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beispielseite</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catch the Ball</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    font-family: Arial, sans-serif;
+    color: white;
+    text-align: center;
+  }
+
+  #scoreboard {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 20px;
+  }
+
+  #ball {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #ff0000, #880000);
+    cursor: pointer;
+    transition: transform 0.1s ease;
+  }
+
+  #startButton {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    color: #333;
+    padding: 15px 30px;
+    font-size: 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  #startButton:hover {
+    background: #eee;
+  }
+</style>
 </head>
 <body>
-    <h1>Willkommen beim Zukunftstag</h1>
-    <p>Dies ist eine kurze index.html Datei als Vorlage.</p>
-    <a href="https://www.youtube.com/shorts/VphA8mMpbxA">sport</a>
-</body>
-</html>
+
+<div id="scoreboard">Punkte: 0</div>
+<button id="startButton">Spiel starten</button>
+<div id="ball" style="display:none;"></div>
+
+<script>
+  const ball = document.getElementById("ball");
+  const scoreBoard = document.getElementById("scoreboard");
+  const startButton = document.getElementById("startButton");
+
+  let score = 0;
+  let gameActive = false;
+  let moveInterval;
+
+  function randomPosition() {
+    const x = Math.random() * (window.innerWidth - 60);
+    const y = Math.random()
+
