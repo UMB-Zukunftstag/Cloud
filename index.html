@@ -3,109 +3,114 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Snake Game</title>
+<title>Mini FIFA</title>
 <style>
 body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: #1a1a1a;
-    color: #fff;
-    height: 100vh;
-    margin: 0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    background:#2c3e50;
+    color:#fff;
     font-family: Arial, sans-serif;
 }
-
 canvas {
-    background: #222;
-    display: block;
-    margin: 20px 0;
-    border: 2px solid #fff;
+    background: #27ae60;
+    margin-top:20px;
+    border:2px solid #fff;
 }
-
 #score {
-    font-size: 24px;
+    font-size:24px;
+    margin-top:10px;
 }
 </style>
 </head>
 <body>
 
-<h1>Snake Game</h1>
-<canvas id="gameCanvas" width="400" height="400"></canvas>
-<div id="score">Punkte: 0</div>
+<h1>Mini FIFA</h1>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+<div id="score">Player: 0 | AI: 0</div>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-const box = 20;
-let snake = [{x: 8*box, y: 8*box}];
-let direction = "RIGHT";
-let food = {
-    x: Math.floor(Math.random() * 20) * box,
-    y: Math.floor(Math.random() * 20) * box
-};
-let score = 0;
+let player = {x:50, y:180, width:20, height:20, color:'#3498db', speed:5};
+let ball = {x:300, y:200, radius:10, dx:3, dy:3};
+let ai = {x:530, y:180, width:20, height:20, color:'#e74c3c', speed:4};
+let playerScore = 0;
+let aiScore = 0;
 
-document.addEventListener("keydown", changeDirection);
+document.addEventListener('keydown', e => {
+    if(e.key === "ArrowUp") player.y -= player.speed;
+    if(e.key === "ArrowDown") player.y += player.speed;
+    if(e.key === "ArrowLeft") player.x -= player.speed;
+    if(e.key === "ArrowRight") player.x += player.speed;
+});
 
-function changeDirection(event){
-    if(event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
-    if(event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
-    if(event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
-    if(event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+function drawRect(obj){
+    ctx.fillStyle = obj.color;
+    ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
 }
 
-function draw(){
-    ctx.fillStyle = "#222";
-    ctx.fillRect(0,0,canvas.width, canvas.height);
-
-    for(let i=0; i<snake.length; i++){
-        ctx.fillStyle = i===0 ? "#ff6f61" : "#fff";
-        ctx.fillRect(snake[i].x, snake[i].y, box, box);
-    }
-
-    ctx.fillStyle = "#0f0";
-    ctx.fillRect(food.x, food.y, box, box);
-
-    let snakeX = snake[0].x;
-    let snakeY = snake[0].y;
-
-    if(direction === "LEFT") snakeX -= box;
-    if(direction === "RIGHT") snakeX += box;
-    if(direction === "UP") snakeY -= box;
-    if(direction === "DOWN") snakeY += box;
-
-    if(snakeX === food.x && snakeY === food.y){
-        score++;
-        document.getElementById('score').textContent = "Punkte: " + score;
-        food = {
-            x: Math.floor(Math.random() * 20) * box,
-            y: Math.floor(Math.random() * 20) * box
-        };
-    } else {
-        snake.pop();
-    }
-
-    let newHead = {x: snakeX, y: snakeY};
-
-    if(snakeX < 0 || snakeY < 0 || snakeX >= canvas.width || snakeY >= canvas.height || collision(newHead, snake)){
-        clearInterval(game);
-        alert("Game Over! Punktzahl: " + score);
-    }
-
-    snake.unshift(newHead);
+function drawBall(){
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius,0, Math.PI*2);
+    ctx.fillStyle = "#fff";
+    ctx.fill();
+    ctx.closePath();
 }
 
-function collision(head, array){
-    for(let i=0; i<array.length; i++){
-        if(head.x === array[i].x && head.y === array[i].y) return true;
-    }
-    return false;
+function resetBall(){
+    ball.x = 300; ball.y = 200;
+    ball.dx = 3 * (Math.random() > 0.5 ? 1 : -1);
+    ball.dy = 3 * (Math.random() > 0.5 ? 1 : -1);
 }
 
-let game = setInterval(draw, 150);
+function update(){
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+
+    // Spieler & KI
+    drawRect(player);
+    drawRect(ai);
+    drawBall();
+
+    // Ball Bewegung
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+
+    // Ball-Kollision mit Wänden
+    if(ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) ball.dy *= -1;
+
+    // Ball-Kollision mit Spieler & KI
+    if(ball.x - ball.radius < player.x + player.width &&
+       ball.x + ball.radius > player.x &&
+       ball.y + ball.radius > player.y &&
+       ball.y - ball.radius < player.y + player.height) {
+        ball.dx *= -1;
+    }
+
+    if(ball.x + ball.radius > ai.x &&
+       ball.x - ball.radius < ai.x + ai.width &&
+       ball.y + ball.radius > ai.y &&
+       ball.y - ball.radius < ai.y + ai.height) {
+        ball.dx *= -1;
+    }
+
+    // KI-Bewegung
+    if(ai.y + ai.height/2 < ball.y) ai.y += ai.speed;
+    if(ai.y + ai.height/2 > ball.y) ai.y -= ai.speed;
+
+    // Tore
+    if(ball.x - ball.radius < 0){ aiScore++; resetBall(); }
+    if(ball.x + ball.radius > canvas.width){ playerScore++; resetBall(); }
+
+    document.getElementById('score').textContent = `Player: ${playerScore} | AI: ${aiScore}`;
+
+    requestAnimationFrame(update);
+}
+
+update();
 </script>
 
 </body>
+</html>
