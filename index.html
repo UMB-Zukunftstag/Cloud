@@ -9,4 +9,60 @@
     <h1>Willkommen beim Zukunftstag</h1>
     <p>Schön bist du hier beim Zukunftstag. Dies ist eine kurze index.html Datei als Vorlage.</p>
 </body>
+</html>!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #gameButton {
+            padding: 20px 40px;
+            font-size: 24px;
+            background-color: #ff6f61;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        #gameButton:active {
+            transform: scale(0.95);
+        }
+        #score {
+            margin-top: 20px;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mini Klickspiel</h1>
+    <button id="gameButton">Klick mich!</button>
+    <div id="score">Punkte: 0</div>
+
+    <script>
+        let score = 0;
+        const button = document.getElementById('gameButton');
+        const scoreDisplay = document.getElementById('score');
+
+        button.addEventListener('click', () => {
+            score++;
+            scoreDisplay.textContent = 'Punkte: ' + score;
+        });
+    </script>
+</body>
 </html>
+
