@@ -1,13 +1,126 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beispielseite</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inbox Rush - Hotmail Game</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to bottom, #cbe0ff, #eaf0ff);
+    margin: 0;
+    padding: 0;
+    text-align: center;
+  }
+  h1 {
+    background: #0072c6;
+    color: white;
+    margin: 0;
+    padding: 15px;
+  }
+  #game {
+    margin: 30px auto;
+    width: 400px;
+    background: white;
+    border: 2px solid #0072c6;
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .mail {
+    border-bottom: 1px solid #ddd;
+    padding: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .mail:hover {
+    background: #f0f8ff;
+  }
+  #score {
+    font-size: 20px;
+    margin: 15px;
+  }
+  #startBtn {
+    background: #0072c6;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+  }
+  #startBtn:hover {
+    background: #005fa3;
+  }
+</style>
 </head>
 <body>
-    <h1>Willkommen beim Zukunftstag</h1>
-    <p>Schön bist du hier beim Zukunftstag. Dies ist eine kurze index.html Datei als Vorlage.</p>
-    <a href="https://www.w3schools.com/">Visit W3Schools.com!</a>
+
+<h1>📧 Inbox Rush</h1>
+<div id="score">Punkte: 0</div>
+<button id="startBtn">Spiel starten</button>
+<div id="game"></div>
+
+<script>
+  const mails = [
+    {subject: "Willkommen bei Hotmail!", legit: true},
+    {subject: "Sie haben eine Million gewonnen!", legit: false},
+    {subject: "Meeting um 14:00 Uhr", legit: true},
+    {subject: "Ihre Lieferung wurde versendet", legit: true},
+    {subject: "Klicken Sie hier für gratis iPhone!", legit: false},
+    {subject: "Rechnung für Oktober", legit: true},
+    {subject: "Passwort läuft ab – klicken Sie sofort!", legit: false},
+    {subject: "Neue Freundschaftsanfrage", legit: true},
+    {subject: "Verdiene 1000€ pro Tag!", legit: false}
+  ];
+
+  let score = 0;
+  let gameInterval;
+
+  const scoreDisplay = document.getElementById("score");
+  const gameDiv = document.getElementById("game");
+  const startBtn = document.getElementById("startBtn");
+
+  function startGame() {
+    score = 0;
+    scoreDisplay.textContent = "Punkte: 0";
+    gameDiv.innerHTML = "";
+    startBtn.disabled = true;
+
+    gameInterval = setInterval(() => {
+      const mail = mails[Math.floor(Math.random() * mails.length)];
+      const mailDiv = document.createElement("div");
+      mailDiv.className = "mail";
+      mailDiv.textContent = mail.subject;
+
+      mailDiv.onclick = () => {
+        if (mail.legit) {
+          score += 10;
+        } else {
+          score -= 15;
+        }
+        scoreDisplay.textContent = "Punkte: " + score;
+        mailDiv.remove();
+      };
+
+      gameDiv.appendChild(mailDiv);
+
+      // Entferne alte Mails nach 3 Sekunden
+      setTimeout(() => {
+        if (gameDiv.contains(mailDiv)) mailDiv.remove();
+      }, 3000);
+
+    }, 800);
+
+    // Spiel endet nach 30 Sekunden
+    setTimeout(() => {
+      clearInterval(gameInterval);
+      gameDiv.innerHTML = "<h3>Spiel vorbei! Dein Endstand: " + score + "</h3>";
+      startBtn.disabled = false;
+    }, 30000);
+  }
+
+  startBtn.onclick = startGame;
+</script>
+
 </body>
 </html>
