@@ -3,30 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mini FIFA</title>
+<title>Mini Eishockey</title>
 <style>
 body {
     display:flex;
     flex-direction:column;
     align-items:center;
-    background:#2c3e50;
+    background:#0f1c2e;
     color:#fff;
     font-family: Arial, sans-serif;
 }
 canvas {
-    background: #27ae60;
-    margin-top:20px;
-    border:2px solid #fff;
+    background: #87ceeb;
+    border: 2px solid #fff;
+    margin-top: 20px;
 }
 #score {
-    font-size:24px;
-    margin-top:10px;
+    font-size: 24px;
+    margin-top: 10px;
 }
 </style>
 </head>
 <body>
 
-<h1>Mini FIFA</h1>
+<h1>Mini Eishockey</h1>
 <canvas id="gameCanvas" width="600" height="400"></canvas>
 <div id="score">Player: 0 | AI: 0</div>
 
@@ -34,12 +34,15 @@ canvas {
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+// Spieler, AI und Puck
 let player = {x:50, y:180, width:20, height:20, color:'#3498db', speed:5};
-let ball = {x:300, y:200, radius:10, dx:3, dy:3};
 let ai = {x:530, y:180, width:20, height:20, color:'#e74c3c', speed:4};
+let puck = {x:300, y:200, radius:10, dx:3, dy:3};
+
 let playerScore = 0;
 let aiScore = 0;
 
+// Steuerung
 document.addEventListener('keydown', e => {
     if(e.key === "ArrowUp") player.y -= player.speed;
     if(e.key === "ArrowDown") player.y += player.speed;
@@ -47,62 +50,60 @@ document.addEventListener('keydown', e => {
     if(e.key === "ArrowRight") player.x += player.speed;
 });
 
+// Zeichnen
 function drawRect(obj){
     ctx.fillStyle = obj.color;
     ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
 }
 
-function drawBall(){
+function drawPuck(){
     ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.radius,0, Math.PI*2);
-    ctx.fillStyle = "#fff";
+    ctx.arc(puck.x, puck.y, puck.radius, 0, Math.PI*2);
+    ctx.fillStyle = "#000";
     ctx.fill();
     ctx.closePath();
 }
 
-function resetBall(){
-    ball.x = 300; ball.y = 200;
-    ball.dx = 3 * (Math.random() > 0.5 ? 1 : -1);
-    ball.dy = 3 * (Math.random() > 0.5 ? 1 : -1);
+// Puck zurücksetzen
+function resetPuck(){
+    puck.x = 300; puck.y = 200;
+    puck.dx = 3 * (Math.random() > 0.5 ? 1 : -1);
+    puck.dy = 3 * (Math.random() > 0.5 ? 1 : -1);
 }
 
+// Kollision mit Rechtecken
+function collision(obj){
+    return puck.x + puck.radius > obj.x &&
+           puck.x - puck.radius < obj.x + obj.width &&
+           puck.y + puck.radius > obj.y &&
+           puck.y - puck.radius < obj.y + obj.height;
+}
+
+// Update Loop
 function update(){
     ctx.clearRect(0,0,canvas.width, canvas.height);
 
-    // Spieler & KI
     drawRect(player);
     drawRect(ai);
-    drawBall();
+    drawPuck();
 
     // Ball Bewegung
-    ball.x += ball.dx;
-    ball.y += ball.dy;
+    puck.x += puck.dx;
+    puck.y += puck.dy;
 
-    // Ball-Kollision mit Wänden
-    if(ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) ball.dy *= -1;
+    // Wände oben/unten
+    if(puck.y - puck.radius < 0 || puck.y + puck.radius > canvas.height) puck.dy *= -1;
 
-    // Ball-Kollision mit Spieler & KI
-    if(ball.x - ball.radius < player.x + player.width &&
-       ball.x + ball.radius > player.x &&
-       ball.y + ball.radius > player.y &&
-       ball.y - ball.radius < player.y + player.height) {
-        ball.dx *= -1;
-    }
+    // Kollision mit Spieler/AI
+    if(collision(player) || collision(ai)) puck.dx *= -1;
 
-    if(ball.x + ball.radius > ai.x &&
-       ball.x - ball.radius < ai.x + ai.width &&
-       ball.y + ball.radius > ai.y &&
-       ball.y - ball.radius < ai.y + ai.height) {
-        ball.dx *= -1;
-    }
-
-    // KI-Bewegung
-    if(ai.y + ai.height/2 < ball.y) ai.y += ai.speed;
-    if(ai.y + ai.height/2 > ball.y) ai.y -= ai.speed;
+    // KI Bewegung
+    if(ai.y + ai.height/2 < puck.y) ai.y += ai.speed;
+    if(ai.y + ai.height/2 > puck.y) ai.y -= ai.speed;
 
     // Tore
-    if(ball.x - ball.radius < 0){ aiScore++; resetBall(); }
-    if(ball.x + ball.radius > canvas.width){ playerScore++; resetBall(); }
+    if(puck.x - puck.radius < 0){ aiScore++; resetPuck(); }
+    if(puck.x + puck.radius > canvas.width){ playerScore++; resetPuck(); }
 
     document.getElementById('score').textContent = `Player: ${playerScore} | AI: ${aiScore}`;
 
