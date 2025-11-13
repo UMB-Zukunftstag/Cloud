@@ -1,12 +1,125 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beispielseite</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catch the Ball Spiel</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: linear-gradient(#87CEEB, #fff);
+    font-family: Arial, sans-serif;
+  }
+
+  #gameCanvas {
+    display: block;
+    background-color: #eee;
+    margin: 0 auto;
+    border: 3px solid #333;
+  }
+
+  #score {
+    text-align: center;
+    font-size: 24px;
+    margin-top: 10px;
+  }
+</style>
 </head>
 <body>
-    <h1>Willkommen beim Zukunftstag</h1>
-    <p>Ich wollte speidermean anrufen er hat kein Nezt </p>
+
+<canvas id="gameCanvas" width="500" height="400"></canvas>
+<div id="score">Punkte: 0</div>
+
+<script>
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+
+  // Spielfigur
+  const player = {
+    x: 220,
+    y: 350,
+    width: 60,
+    height: 20,
+    speed: 6
+  };
+
+  // Ball-Array
+  const balls = [];
+  let score = 0;
+
+  function createBall() {
+    const ball = {
+      x: Math.random() * (canvas.width - 20),
+      y: 0,
+      radius: 10,
+      speed: 3 + Math.random() * 2
+    };
+    balls.push(ball);
+  }
+
+  // Steuerung
+  const keys = {};
+  document.addEventListener("keydown", e => keys[e.key] = true);
+  document.addEventListener("keyup", e => keys[e.key] = false);
+
+  function update() {
+    // Spielerbewegung
+    if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
+    if (keys["ArrowRight"] && player.x + player.width < canvas.width) player.x += player.speed;
+
+    // Bälle bewegen
+    for (let i = balls.length - 1; i >= 0; i--) {
+      const b = balls[i];
+      b.y += b.speed;
+
+      // Kollision mit Spieler
+      if (
+        b.y + b.radius > player.y &&
+        b.x > player.x &&
+        b.x < player.x + player.width
+      ) {
+        score++;
+        balls.splice(i, 1);
+        continue;
+      }
+
+      // Ball verpasst → entfernen
+      if (b.y > canvas.height) {
+        balls.splice(i, 1);
+      }
+    }
+
+    // Neue Bälle hinzufügen
+    if (Math.random() < 0.02) createBall();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Spieler zeichnen
+    ctx.fillStyle = "#333";
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+
+    // Bälle zeichnen
+    ctx.fillStyle = "red";
+    for (const b of balls) {
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    document.getElementById("score").textContent = "Punkte: " + score;
+  }
+
+  function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+  }
+
+  gameLoop();
+</script>
+
 </body>
 </html>
