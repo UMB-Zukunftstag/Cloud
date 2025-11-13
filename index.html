@@ -1,127 +1,55 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>3D Ballergame</title>
+  <meta charset="UTF-8">
+  <title>4K Ballergame</title>
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background-color: black;
-      font-family: sans-serif;
-      color: white;
-    }
-    #info {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 1;
+    canvas {
+      background: black;
+      display: block;
+      margin: 0 auto;
     }
   </style>
 </head>
 <body>
-  <div id="info">⬅️➡️ Bewegen | Leertaste = Schießen</div>
-
-  <!-- Three.js von CDN laden -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-
+  <canvas id="gameCanvas" width="3840" height="2160"></canvas>
   <script>
-    // === Grundelemente ===
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000020); // dunkler Weltraum-Hintergrund
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
 
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+    let player = { x: canvas.width / 2, y: canvas.height - 100, width: 50, height: 50 };
+    let bullets = [];
 
-    // === Licht ===
-    const ambient = new THREE.AmbientLight(0xffffff, 0.6); // Umgebungslicht
-    scene.add(ambient);
-
-    const directional = new THREE.DirectionalLight(0xffffff, 1.2);
-    directional.position.set(0, 10, 10);
-    scene.add(directional);
-
-    // === Spieler ===
-    const shipGeometry = new THREE.ConeGeometry(0.5, 1.5, 8);
-    const shipMaterial = new THREE.MeshStandardMaterial({
-      color: 0x00ffff,
-      emissive: 0x003333
+    document.addEventListener("keydown", e => {
+      if (e.key === "ArrowLeft") player.x -= 20;
+      if (e.key === "ArrowRight") player.x += 20;
+      if (e.key === " ") {
+        bullets.push({ x: player.x + player.width / 2, y: player.y });
+      }
     });
-    const ship = new THREE.Mesh(shipGeometry, shipMaterial);
-    ship.rotation.x = Math.PI / 2;
-    ship.position.z = 0;
-    scene.add(ship);
 
-    // === Projektile ===
-    const bullets = [];
-
-    function shoot() {
-      const geom = new THREE.SphereGeometry(0.1, 8, 8);
-      const mat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-      const bullet = new THREE.Mesh(geom, mat);
-      bullet.position.copy(ship.position);
-      scene.add(bullet);
-      bullets.push(bullet);
+    function drawPlayer() {
+      ctx.fillStyle = "lime";
+      ctx.fillRect(player.x, player.y, player.width, player.height);
     }
 
-    // === Gegner ===
-    const enemies = [];
-
-    function spawnEnemy() {
-      const geom = new THREE.BoxGeometry(1, 1, 1);
-      const mat = new THREE.MeshStandardMaterial({
-        color: 0xff4444,
-        emissive: 0x220000
+    function drawBullets() {
+      ctx.fillStyle = "red";
+      bullets.forEach((b, i) => {
+        b.y -= 10;
+        ctx.fillRect(b.x, b.y, 5, 20);
+        if (b.y < 0) bullets.splice(i, 1);
       });
-      const enemy = new THREE.Mesh(geom, mat);
-      enemy.position.set((Math.random() - 0.5) * 10, 0, -30);
-      scene.add(enemy);
-      enemies.push(enemy);
     }
 
-    // === Steuerung ===
-    const keys = {};
-    document.addEventListener("keydown", (e) => {
-      keys[e.code] = true;
-      if (e.code === "Space") shoot();
-    });
-    document.addEventListener("keyup", (e) => {
-      keys[e.code] = false;
-    });
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawPlayer();
+      drawBullets();
+      requestAnimationFrame(gameLoop);
+    }
 
-    // === Kamera ===
-    camera.position.z = 5;
-    camera.position.y = 1.5;
-
-    // === Spiel-Logik ===
-    let score = 0;
-
-    function update() {
-      // Bewegung des Schiffs
-      if (keys["ArrowLeft"]) ship.position.x -= 0.1;
-      if (keys["ArrowRight"]) ship.position.x += 0.1;
-
-      // Projektile bewegen
-      for (let i = bullets.length - 1; i >= 0; i--) {
-        bullets[i].position.z -= 0.5;
-        if (bullets[i].position.z < -50) {
-          scene.remove(bullets[i]);
-          bullets.splice(i, 1);
-        }
-      }
-
-      // Gegner bewegen
-      for (let i = enemies.length - 1; i >= 0; i--) {
-        enemies[i].position.z += 0.05;
-        if (enemies[i].position.z > 5) {
-          scene.remove(enemies[i]);
-          enemies.splice(i, 1);
-        }
-      }
-
-      // Kollision prüfen
-      for (let i = enemies.length - 1; i >= 0; i--) {
-        for (let j = bullets.leng
+    gameLoop();
+  </script>
+</body>
+</html>
