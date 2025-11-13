@@ -3,48 +3,87 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Catch the Ball Spiel</title>
+<title>Catch the Ball – Mobil</title>
 <style>
   body {
     margin: 0;
     overflow: hidden;
     background: linear-gradient(#87CEEB, #fff);
     font-family: Arial, sans-serif;
+    touch-action: none; /* verhindert Scrollen während Touch */
   }
 
   #gameCanvas {
     display: block;
-    background-color: #eee;
     margin: 0 auto;
     border: 3px solid #333;
+    background-color: #eee;
   }
 
   #score {
     text-align: center;
     font-size: 24px;
     margin-top: 10px;
+    user-select: none;
+  }
+
+  /* Buttons für Touch-Steuerung */
+  .controls {
+    display: flex;
+    justify-content: center;
+    margin-top: 15px;
+    gap: 30px;
+  }
+
+  .btn {
+    background: #333;
+    color: #fff;
+    border: none;
+    padding: 15px 25px;
+    font-size: 22px;
+    border-radius: 10px;
+    user-select: none;
+  }
+
+  .btn:active {
+    background: #555;
   }
 </style>
 </head>
 <body>
 
-<canvas id="gameCanvas" width="500" height="400"></canvas>
+<canvas id="gameCanvas"></canvas>
 <div id="score">Punkte: 0</div>
+
+<!-- Touch-Buttons für mobile Steuerung -->
+<div class="controls">
+  <button class="btn" id="leftBtn">⬅️</button>
+  <button class="btn" id="rightBtn">➡️</button>
+</div>
 
 <script>
   const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
+  const scoreEl = document.getElementById("score");
 
-  // Spielfigur
+  // Canvas dynamisch an Bildschirm anpassen
+  function resizeCanvas() {
+    canvas.width = window.innerWidth * 0.9;
+    canvas.height = window.innerHeight * 0.6;
+  }
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+
+  // Spieler
   const player = {
-    x: 220,
-    y: 350,
-    width: 60,
+    x: canvas.width / 2 - 40,
+    y: canvas.height - 40,
+    width: 80,
     height: 20,
     speed: 6
   };
 
-  // Ball-Array
+  // Bälle
   const balls = [];
   let score = 0;
 
@@ -53,7 +92,7 @@
       x: Math.random() * (canvas.width - 20),
       y: 0,
       radius: 10,
-      speed: 3 + Math.random() * 2
+      speed: 2 + Math.random() * 2
     };
     balls.push(ball);
   }
@@ -63,10 +102,23 @@
   document.addEventListener("keydown", e => keys[e.key] = true);
   document.addEventListener("keyup", e => keys[e.key] = false);
 
+  // Touch-Buttons
+  const leftBtn = document.getElementById("leftBtn");
+  const rightBtn = document.getElementById("rightBtn");
+  let movingLeft = false;
+  let movingRight = false;
+
+  leftBtn.addEventListener("touchstart", () => movingLeft = true);
+  leftBtn.addEventListener("touchend", () => movingLeft = false);
+  rightBtn.addEventListener("touchstart", () => movingRight = true);
+  rightBtn.addEventListener("touchend", () => movingRight = false);
+
   function update() {
-    // Spielerbewegung
-    if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
-    if (keys["ArrowRight"] && player.x + player.width < canvas.width) player.x += player.speed;
+    // Bewegung – Tastatur oder Touch
+    if ((keys["ArrowLeft"] || movingLeft) && player.x > 0)
+      player.x -= player.speed;
+    if ((keys["ArrowRight"] || movingRight) && player.x + player.width < canvas.width)
+      player.x += player.speed;
 
     // Bälle bewegen
     for (let i = balls.length - 1; i >= 0; i--) {
@@ -84,7 +136,7 @@
         continue;
       }
 
-      // Ball verpasst → entfernen
+      // Ball verpasst
       if (b.y > canvas.height) {
         balls.splice(i, 1);
       }
@@ -109,7 +161,7 @@
       ctx.fill();
     }
 
-    document.getElementById("score").textContent = "Punkte: " + score;
+    scoreEl.textContent = "Punkte: " + score;
   }
 
   function gameLoop() {
