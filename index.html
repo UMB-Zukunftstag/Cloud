@@ -3,41 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fang die Blasen!</title>
+<title>Raumschiff Ausweichspiel</title>
 <style>
     body {
         margin: 0;
         overflow: hidden;
-        background: linear-gradient(to top, #1e3c72, #2a5298);
-        font-family: 'Arial', sans-serif;
+        background: black;
+        font-family: Arial, sans-serif;
         color: white;
         text-align: center;
     }
-    h1 {
-        margin-top: 20px;
+    #gameCanvas {
+        display: block;
+        margin: 0 auto;
+        background: linear-gradient(to top, #000 0%, #111 100%);
+        border: 2px solid #fff;
     }
     #score {
         font-size: 1.5em;
         margin: 10px;
-    }
-    .bubble {
-        position: absolute;
-        width: 50px;
-        height: 50px;
-        background-color: rgba(255,255,255,0.7);
-        border-radius: 50%;
-        cursor: pointer;
-        transition: transform 0.1s, background-color 0.2s;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-weight: bold;
-        color: #333;
-        user-select: none;
-    }
-    .bubble:active {
-        transform: scale(1.2);
-        background-color: #ffeb3b;
     }
     #startBtn {
         padding: 10px 20px;
@@ -56,72 +40,113 @@
 </head>
 <body>
 
-<h1>Fang die Blasen!</h1>
+<h1>Raumschiff Ausweichspiel</h1>
 <div id="score">Punkte: 0</div>
 <button id="startBtn">Spiel starten</button>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
 
 <script>
-const scoreEl = document.getElementById('score');
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 const startBtn = document.getElementById('startBtn');
+const scoreEl = document.getElementById('score');
+
+let ship = { x: 280, y: 350, width: 40, height: 40, speed: 5 };
+let keys = {};
+let obstacles = [];
 let score = 0;
-let bubbles = [];
-let gameInterval;
+let gameInterval, obstacleInterval;
 
-function zufallsPosition(max) {
-    return Math.random() * max;
+// Tastatureingaben
+document.addEventListener('keydown', e => keys[e.key] = true);
+document.addEventListener('keyup', e => keys[e.key] = false);
+
+// Raumschiff zeichnen
+function drawShip() {
+    ctx.fillStyle = '#00f';
+    ctx.beginPath();
+    ctx.moveTo(ship.x + ship.width/2, ship.y);
+    ctx.lineTo(ship.x, ship.y + ship.height);
+    ctx.lineTo(ship.x + ship.width, ship.y + ship.height);
+    ctx.closePath();
+    ctx.fill();
 }
 
-function createBubble() {
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    bubble.textContent = Math.floor(Math.random() * 10);
-    bubble.style.left = zufallsPosition(window.innerWidth - 50) + 'px';
-    bubble.style.top = zufallsPosition(window.innerHeight - 50) + 'px';
-
-    bubble.addEventListener('click', () => {
-        score += parseInt(bubble.textContent);
-        scoreEl.textContent = `Punkte: ${score}`;
-        bubble.remove();
-        bubbles = bubbles.filter(b => b !== bubble);
-    });
-
-    document.body.appendChild(bubble);
-    bubbles.push(bubble);
-}
-
-function moveBubbles() {
-    bubbles.forEach(bubble => {
-        let x = parseFloat(bubble.style.left);
-        let y = parseFloat(bubble.style.top);
-        x += (Math.random() - 0.5) * 20;
-        y += (Math.random() - 0.5) * 20;
-        x = Math.max(0, Math.min(window.innerWidth - 50, x));
-        y = Math.max(0, Math.min(window.innerHeight - 50, y));
-        bubble.style.left = x + 'px';
-        bubble.style.top = y + 'px';
+// Hindernisse zeichnen
+function drawObstacles() {
+    ctx.fillStyle = '#f00';
+    obstacles.forEach(obs => {
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
     });
 }
 
+// Update Spielzustand
+function update() {
+    // Raumschiff bewegen
+    if (keys['ArrowLeft'] && ship.x > 0) ship.x -= ship.speed;
+    if (keys['ArrowRight'] && ship.x + ship.width < canvas.width) ship.x += ship.speed;
+    if (keys['ArrowUp'] && ship.y > 0) ship.y -= ship.speed;
+    if (keys['ArrowDown'] && ship.y + ship.height < canvas.height) ship.y += ship.speed;
+
+    // Hindernisse bewegen
+    obstacles.forEach(obs => obs.y += obs.speed);
+
+    // Kollision prüfen
+    for (let obs of obstacles) {
+        if (ship.x < obs.x + obs.width &&
+            ship.x + ship.width > obs.x &&
+            ship.y < obs.y + obs.height &&
+            ship.y + ship.height > obs.y) {
+            endGame();
+            return;
+        }
+    }
+
+    // Punkte erhöhen
+    score += 0.02;
+    scoreEl.textContent = `Punkte: ${Math.floor(score)}`;
+}
+
+// Neue Hindernisse erstellen
+function createObstacle() {
+    const width = 30 + Math.random() * 40;
+    const x = Math.random() * (canvas.width - width);
+    const speed = 2 + Math.random() * 3;
+    obstacles.push({ x: x, y: -50, width: width, height: 20, speed: speed });
+}
+
+// Spiel rendern
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawShip();
+    drawObstacles();
+}
+
+// Hauptschleife
+function gameLoop() {
+    update();
+    draw();
+}
+
+// Spiel starten
 function startGame() {
+    ship.x = 280;
+    ship.y = 350;
+    obstacles = [];
     score = 0;
     scoreEl.textContent = 'Punkte: 0';
-    bubbles.forEach(b => b.remove());
-    bubbles = [];
-
     startBtn.disabled = true;
 
-    gameInterval = setInterval(() => {
-        if (bubbles.length < 10) createBubble();
-        moveBubbles();
-    }, 500);
+    gameInterval = setInterval(gameLoop, 20);
+    obstacleInterval = setInterval(createObstacle, 1000);
+}
 
-    setTimeout(() => {
-        clearInterval(gameInterval);
-        bubbles.forEach(b => b.remove());
-        bubbles = [];
-        alert(`Spiel vorbei! Deine Punkte: ${score}`);
-        startBtn.disabled = false;
-    }, 30000); // 30 Sekunden Spiel
+// Spiel beenden
+function endGame() {
+    clearInterval(gameInterval);
+    clearInterval(obstacleInterval);
+    alert(`Spiel vorbei! Deine Punkte: ${Math.floor(score)}`);
+    startBtn.disabled = false;
 }
 
 startBtn.addEventListener('click', startGame);
