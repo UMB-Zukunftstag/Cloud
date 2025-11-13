@@ -3,63 +3,67 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mini-Fortnite</title>
+<title>Mini-Minecraft 2D</title>
 <style>
-body { margin:0; background:#87ceeb; display:flex; flex-direction:column; align-items:center; font-family:Arial, sans-serif; }
+body { margin:0; display:flex; flex-direction:column; align-items:center; font-family:Arial, sans-serif; background:#87ceeb; }
 canvas { border:2px solid #000; background:#a3d977; margin-top:20px; }
-#info { color:#000; font-size:18px; margin-top:10px; }
+#info { margin-top:10px; font-size:18px; color:#000; }
 </style>
 </head>
 <body>
 
-<h1>Mini-Fortnite 2D</h1>
-<canvas id="gameCanvas" width="600" height="400"></canvas>
-<div id="info">Coins gesammelt: <span id="coins">0</span></div>
+<h1>Mini-Minecraft 2D</h1>
+<canvas id="gameCanvas" width="400" height="400"></canvas>
+<div id="info">Blockfarbe: <span id="current">braun</span></div>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-let player = {x:50, y:350, width:20, height:20, color:'#3498db', speed:5};
-let coins = [];
-let coinsCollected = 0;
+const gridSize = 20;
+const rows = canvas.height / gridSize;
+const cols = canvas.width / gridSize;
 
-// Coins zufällig platzieren
-for(let i=0;i<5;i++){
-    coins.push({x:Math.random()*580, y:Math.random()*380, radius:10});
-}
+let player = {x:5, y:5, color:'#3498db'};
+let blocks = [];
 
+// Erster Blocktyp
+let currentBlock = '#8B4513'; // braun
+
+// Steuerung
 document.addEventListener('keydown', e=>{
-    if(e.key==='ArrowUp') player.y -= player.speed;
-    if(e.key==='ArrowDown') player.y += player.speed;
-    if(e.key==='ArrowLeft') player.x -= player.speed;
-    if(e.key==='ArrowRight') player.x += player.speed;
+    if(e.key==='ArrowUp') player.y = Math.max(0, player.y-1);
+    if(e.key==='ArrowDown') player.y = Math.min(rows-1, player.y+1);
+    if(e.key==='ArrowLeft') player.x = Math.max(0, player.x-1);
+    if(e.key==='ArrowRight') player.x = Math.min(cols-1, player.x+1);
+    if(e.key===' ') toggleBlock();
 });
 
-// Zeichnen
-function drawPlayer(){ ctx.fillStyle = player.color; ctx.fillRect(player.x, player.y, player.width, player.height); }
-function drawCoins(){ coins.forEach(c=>{ ctx.beginPath(); ctx.arc(c.x,c.y,c.radius,0,Math.PI*2); ctx.fillStyle="#ffd700"; ctx.fill(); ctx.closePath(); }); }
-
-// Kollision
-function checkCollision(a,b){ return a.x < b.x+b.radius && a.x+player.width > b.x-b.radius && a.y < b.y+b.radius && a.y+player.height > b.y-b.radius; }
-
-function update(){
-    ctx.clearRect(0,0,canvas.width, canvas.height);
-    drawPlayer();
-    drawCoins();
-
-    coins.forEach((c,i)=>{
-        if(checkCollision(player,c)){
-            coins.splice(i,1);
-            coinsCollected++;
-            document.getElementById('coins').textContent = coinsCollected;
-        }
-    });
-
-    requestAnimationFrame(update);
+// Block setzen oder entfernen
+function toggleBlock(){
+    const index = blocks.findIndex(b=>b.x===player.x && b.y===player.y);
+    if(index>=0) blocks.splice(index,1); // entfernen
+    else blocks.push({x:player.x, y:player.y, color:currentBlock}); // setzen
 }
 
-update();
+// Zeichnen
+function draw(){
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+
+    // Blöcke zeichnen
+    blocks.forEach(b=>{
+        ctx.fillStyle = b.color;
+        ctx.fillRect(b.x*gridSize, b.y*gridSize, gridSize, gridSize);
+    });
+
+    // Spieler zeichnen
+    ctx.fillStyle = player.color;
+    ctx.fillRect(player.x*gridSize, player.y*gridSize, gridSize, gridSize);
+
+    requestAnimationFrame(draw);
+}
+
+draw();
 </script>
 
 </body>
