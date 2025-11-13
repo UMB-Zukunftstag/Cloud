@@ -1,118 +1,111 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gamified Shop</title>
+<title>Snake Game</title>
 <style>
-body { font-family: Arial; background: #f4f4f4; margin:0; padding:0; }
-header { background: #333; color:#fff; padding:20px; text-align:center;}
-.products, .game-section { display:flex; justify-content:center; flex-wrap:wrap; padding:20px; }
-.product, .game-section div { background:#fff; margin:10px; padding:20px; border-radius:10px; text-align:center; width:200px; box-shadow:0 2px 5px rgba(0,0,0,0.2); }
-button { padding:10px 20px; margin-top:10px; cursor:pointer; background:#ff6f61; border:none; border-radius:5px; color:#fff; }
-.cart { position:fixed; top:20px; right:20px; background:#ff6f61; color:#fff; padding:15px; border-radius:50px; cursor:pointer; }
-.cart-items { display:none; position:fixed; top:60px; right:20px; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.2); width:250px; }
-.cart-items h3 { margin-top:0; }
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #1a1a1a;
+    color: #fff;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+canvas {
+    background: #222;
+    display: block;
+    margin: 20px 0;
+    border: 2px solid #fff;
+}
+
+#score {
+    font-size: 24px;
+}
 </style>
 </head>
 <body>
 
-<header>
-    <h1>Gamified Shop</h1>
-    <p>Coins: <span id="coins">0</span></p>
-</header>
-
-<div class="game-section">
-    <div>
-        <h3>Klickspiel</h3>
-        <p>Punkte sammeln und Coins erhalten!</p>
-        <button id="gameButton">Klick mich!</button>
-        <p>Punkte: <span id="score">0</span></p>
-    </div>
-</div>
-
-<div class="products">
-    <div class="product">
-        <h3>Produkt 1</h3>
-        <p>Preis: 10€</p>
-        <p>Coins: 20</p>
-        <button data-name="Produkt 1" data-price="10" data-coins="20">In den Warenkorb</button>
-    </div>
-    <div class="product">
-        <h3>Produkt 2</h3>
-        <p>Preis: 15€</p>
-        <p>Coins: 30</p>
-        <button data-name="Produkt 2" data-price="15" data-coins="30">In den Warenkorb</button>
-    </div>
-</div>
-
-<div class="cart">🛒 Warenkorb</div>
-<div class="cart-items">
-    <h3>Warenkorb</h3>
-    <ul id="cartList"></ul>
-    <p id="totalPrice">Gesamt: 0€</p>
-    <p>Verfügbare Coins: <span id="availableCoins">0</span></p>
-</div>
+<h1>Snake Game</h1>
+<canvas id="gameCanvas" width="400" height="400"></canvas>
+<div id="score">Punkte: 0</div>
 
 <script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const box = 20;
+let snake = [{x: 8*box, y: 8*box}];
+let direction = "RIGHT";
+let food = {
+    x: Math.floor(Math.random() * 20) * box,
+    y: Math.floor(Math.random() * 20) * box
+};
 let score = 0;
-let coins = 0;
-const cart = [];
 
-const gameButton = document.getElementById('gameButton');
-const scoreDisplay = document.getElementById('score');
-const coinsDisplay = document.getElementById('coins');
-const cartButton = document.querySelector('.cart');
-const cartItems = document.querySelector('.cart-items');
-const cartList = document.getElementById('cartList');
-const totalPriceEl = document.getElementById('totalPrice');
-const availableCoinsEl = document.getElementById('availableCoins');
+document.addEventListener("keydown", changeDirection);
 
-// Spiel-Logik
-gameButton.addEventListener('click', () => {
-    score++;
-    if(score % 5 === 0){ // Für jede 5 Punkte, 1 Coin
-        coins++;
-        coinsDisplay.textContent = coins;
-    }
-    scoreDisplay.textContent = score;
-});
-
-// Warenkorb-Logik
-document.querySelectorAll('.product button').forEach(button => {
-    button.addEventListener('click', () => {
-        const name = button.getAttribute('data-name');
-        const price = parseFloat(button.getAttribute('data-price'));
-        const coinCost = parseInt(button.getAttribute('data-coins'));
-        if(coins >= coinCost){
-            coins -= coinCost;
-            coinsDisplay.textContent = coins;
-            cart.push({name, price});
-            updateCart();
-        } else {
-            alert('Nicht genügend Coins!');
-        }
-    });
-});
-
-cartButton.addEventListener('click', () => {
-    cartItems.style.display = cartItems.style.display === 'block' ? 'none' : 'block';
-});
-
-function updateCart(){
-    cartList.innerHTML = '';
-    let total = 0;
-    cart.forEach(item => {
-        const li = document.createElement('li');
-        li.textContent = `${item.name} - ${item.price}€`;
-        cartList.appendChild(li);
-        total += item.price;
-    });
-    totalPriceEl.textContent = 'Gesamt: ' + total + '€';
-    availableCoinsEl.textContent = coins;
+function changeDirection(event){
+    if(event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+    if(event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+    if(event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+    if(event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
 }
+
+function draw(){
+    ctx.fillStyle = "#222";
+    ctx.fillRect(0,0,canvas.width, canvas.height);
+
+    for(let i=0; i<snake.length; i++){
+        ctx.fillStyle = i===0 ? "#ff6f61" : "#fff";
+        ctx.fillRect(snake[i].x, snake[i].y, box, box);
+    }
+
+    ctx.fillStyle = "#0f0";
+    ctx.fillRect(food.x, food.y, box, box);
+
+    let snakeX = snake[0].x;
+    let snakeY = snake[0].y;
+
+    if(direction === "LEFT") snakeX -= box;
+    if(direction === "RIGHT") snakeX += box;
+    if(direction === "UP") snakeY -= box;
+    if(direction === "DOWN") snakeY += box;
+
+    if(snakeX === food.x && snakeY === food.y){
+        score++;
+        document.getElementById('score').textContent = "Punkte: " + score;
+        food = {
+            x: Math.floor(Math.random() * 20) * box,
+            y: Math.floor(Math.random() * 20) * box
+        };
+    } else {
+        snake.pop();
+    }
+
+    let newHead = {x: snakeX, y: snakeY};
+
+    if(snakeX < 0 || snakeY < 0 || snakeX >= canvas.width || snakeY >= canvas.height || collision(newHead, snake)){
+        clearInterval(game);
+        alert("Game Over! Punktzahl: " + score);
+    }
+
+    snake.unshift(newHead);
+}
+
+function collision(head, array){
+    for(let i=0; i<array.length; i++){
+        if(head.x === array[i].x && head.y === array[i].y) return true;
+    }
+    return false;
+}
+
+let game = setInterval(draw, 150);
 </script>
 
 </body>
-</html>
