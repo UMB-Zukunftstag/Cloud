@@ -1,65 +1,69 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mini-Minecraft 2D</title>
+<title>Mini-Forza</title>
 <style>
 body { margin:0; display:flex; flex-direction:column; align-items:center; font-family:Arial, sans-serif; background:#87ceeb; }
-canvas { border:2px solid #000; background:#a3d977; margin-top:20px; }
+canvas { border:2px solid #000; background:#555; margin-top:20px; }
 #info { margin-top:10px; font-size:18px; color:#000; }
 </style>
 </head>
 <body>
 
-<h1>Mini-Minecraft 2D</h1>
-<canvas id="gameCanvas" width="400" height="400"></canvas>
-<div id="info">Blockfarbe: <span id="current">braun</span></div>
+<h1>Mini-Forza 2D</h1>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+<div id="info">Geschwindigkeit: <span id="speed">0</span></div>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-const gridSize = 20;
-const rows = canvas.height / gridSize;
-const cols = canvas.width / gridSize;
-
-let player = {x:5, y:5, color:'#3498db'};
-let blocks = [];
-
-// Erster Blocktyp
-let currentBlock = '#8B4513'; // braun
+let car = {x:300, y:350, width:30, height:50, color:'#3498db', speed:0};
+let maxSpeed = 10;
+let acceleration = 0.2;
 
 // Steuerung
-document.addEventListener('keydown', e=>{
-    if(e.key==='ArrowUp') player.y = Math.max(0, player.y-1);
-    if(e.key==='ArrowDown') player.y = Math.min(rows-1, player.y+1);
-    if(e.key==='ArrowLeft') player.x = Math.max(0, player.x-1);
-    if(e.key==='ArrowRight') player.x = Math.min(cols-1, player.x+1);
-    if(e.key===' ') toggleBlock();
-});
+let keys = {};
+document.addEventListener('keydown', e=>keys[e.key]=true);
+document.addEventListener('keyup', e=>keys[e.key]=false);
 
-// Block setzen oder entfernen
-function toggleBlock(){
-    const index = blocks.findIndex(b=>b.x===player.x && b.y===player.y);
-    if(index>=0) blocks.splice(index,1); // entfernen
-    else blocks.push({x:player.x, y:player.y, color:currentBlock}); // setzen
+function updateCar(){
+    // Gas & Bremse
+    if(keys['ArrowUp']) car.speed = Math.min(maxSpeed, car.speed + acceleration);
+    else if(keys['ArrowDown']) car.speed = Math.max(-maxSpeed/2, car.speed - acceleration);
+    else car.speed *= 0.95; // Reibung
+
+    // Links/Rechts
+    if(keys['ArrowLeft']) car.x -= 5;
+    if(keys['ArrowRight']) car.x += 5;
+
+    // Vorwärts
+    car.y -= car.speed;
+
+    // Kollision mit Bildschirmrand
+    if(car.x < 0) car.x = 0;
+    if(car.x + car.width > canvas.width) car.x = canvas.width - car.width;
+    if(car.y < 0) car.y = 0;
+    if(car.y + car.height > canvas.height) car.y = canvas.height - car.height;
+
+    document.getElementById('speed').textContent = Math.round(car.speed*10);
 }
 
 // Zeichnen
 function draw(){
-    ctx.clearRect(0,0,canvas.width, canvas.height);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    // Blöcke zeichnen
-    blocks.forEach(b=>{
-        ctx.fillStyle = b.color;
-        ctx.fillRect(b.x*gridSize, b.y*gridSize, gridSize, gridSize);
-    });
+    // Strecke
+    ctx.fillStyle = '#444';
+    ctx.fillRect(100,0,400,canvas.height);
 
-    // Spieler zeichnen
-    ctx.fillStyle = player.color;
-    ctx.fillRect(player.x*gridSize, player.y*gridSize, gridSize, gridSize);
+    // Auto
+    ctx.fillStyle = car.color;
+    ctx.fillRect(car.x, car.y, car.width, car.height);
 
+    updateCar();
     requestAnimationFrame(draw);
 }
 
