@@ -1,12 +1,623 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beispielseite</title>
+  <meta charset="UTF-8" />
+  <title>Juve vs Inter: Elfmeter Spiel</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #1b5cff, #020814 60%);
+      color: #f5f5f5;
+    }
+
+    .stadium {
+      background: rgba(0, 0, 0, 0.45);
+      padding: 24px;
+      border-radius: 20px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.6);
+      max-width: 900px;
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 16px;
+      font-size: 28px;
+      letter-spacing: 0.04em;
+    }
+
+    .scoreboard {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 14px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      margin-bottom: 18px;
+    }
+
+    .team-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+    }
+
+    .badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      border: 2px solid rgba(255,255,255,0.5);
+    }
+
+    .badge.juve {
+      background: #000;
+      color: #fff;
+    }
+
+    .badge.inter {
+      background: #0c1a3c;
+      color: #f9d25a;
+    }
+
+    .score {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .round-info {
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    .field {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1.2fr 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .team-card {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .team-card h2 {
+      font-size: 18px;
+    }
+
+    .current-turn {
+      font-size: 13px;
+      opacity: 0.85;
+    }
+
+    .team-card.active {
+      box-shadow: 0 0 20px rgba(255,255,255,0.18);
+      border-color: rgba(255,255,255,0.4);
+    }
+
+    .shoot-info {
+      font-size: 13px;
+      opacity: 0.85;
+      text-align: center;
+    }
+
+    .goal-area {
+      padding: 16px;
+      border-radius: 18px;
+      background: radial-gradient(circle at top, #1a8f3b, #084215);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .goal-frame {
+      width: 100%;
+      height: 70px;
+      border: 3px solid #f9f9f9;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      position: relative;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(0,0,0,0.4));
+    }
+
+    .keeper {
+      width: 34px;
+      height: 34px;
+      background: #f5f5f5;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #111;
+      transition: transform 0.18s ease;
+    }
+
+    .ball {
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      position: absolute;
+      bottom: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 0 6px rgba(255,255,255,0.8);
+      transition: bottom 0.28s ease, left 0.28s ease;
+    }
+
+    .goal-message {
+      text-align: center;
+      font-weight: 600;
+      min-height: 22px;
+      margin-bottom: 8px;
+      font-size: 15px;
+      text-shadow: 0 0 5px rgba(0,0,0,0.6);
+    }
+
+    .goal-message.goal {
+      color: #4dfc7d;
+    }
+
+    .goal-message.save {
+      color: #ffe66b;
+    }
+
+    .goal-message.miss {
+      color: #ff9494;
+    }
+
+    .power-bar {
+      width: 100%;
+      height: 16px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+      margin-bottom: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      position: relative;
+    }
+
+    .power-fill {
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, #ff6060, #ffd86b, #4dfc7d);
+      transition: width 0.04s linear;
+    }
+
+    .sweet-spot {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      border-left: 2px dashed rgba(255,255,255,0.8);
+      border-right: 2px dashed rgba(255,255,255,0.8);
+      left: 40%;
+      width: 20%;
+      pointer-events: none;
+    }
+
+    .controls {
+      margin-top: 16px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      padding: 10px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.1);
+      color: #f5f5f5;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.4);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, opacity 0.2s ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 26px rgba(0,0,0,0.45);
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 5px 12px rgba(0,0,0,0.4);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .shoot-btn {
+      width: 100%;
+      margin-top: 2px;
+    }
+
+    .team-btn {
+      font-size: 12px;
+      padding: 8px 14px;
+    }
+
+    .team-btn.active {
+      background: #ffffff;
+      color: #111827;
+    }
+
+    .hint {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .winner-banner {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .winner-banner.juve {
+      color: #8bffb4;
+    }
+
+    .winner-banner.inter {
+      color: #ffd86b;
+    }
+
+    .winner-banner.draw {
+      color: #e0e0e0;
+    }
+
+    @media (max-width: 720px) {
+      .field {
+        grid-template-columns: 1fr;
+      }
+      .goal-area {
+        order: -1;
+      }
+    }
+  </style>
 </head>
 <body>
-    <h1>Willkommen beim Zukunftstag</h1>
-    <p>Schön bist du hier beim Zukunftstag. Dies ist eine kurze index.html Datei als Vorlage.</p>
+  <div class="stadium">
+    <h1>Juve vs Inter: Elfmeter Spiel</h1>
+
+    <div class="scoreboard">
+      <div class="team-label">
+        <div class="badge juve">JUV</div>
+        <span>Juve</span>
+      </div>
+      <div class="score" id="score-text">0 : 0</div>
+      <div class="team-label" style="justify-content: flex-end;">
+        <span>Inter</span>
+        <div class="badge inter">INT</div>
+      </div>
+    </div>
+
+    <div class="round-info" id="round-info">Schuss 1 von 10</div>
+
+    <div class="field">
+      <div class="team-card" id="juve-card">
+        <h2>Juve</h2>
+        <div class="current-turn" id="juve-turn">Bereit</div>
+      </div>
+
+      <div class="goal-area">
+        <div class="goal-message" id="goal-message"></div>
+        <div class="goal-frame">
+          <div class="keeper" id="keeper">🧤</div>
+          <div class="ball" id="ball"></div>
+        </div>
+
+        <div class="power-bar">
+          <div class="sweet-spot"></div>
+          <div class="power-fill" id="power-fill"></div>
+        </div>
+
+        <button class="shoot-btn" id="shoot-btn">Schuss stoppen</button>
+      </div>
+
+      <div class="team-card" id="inter-card">
+        <h2>Inter</h2>
+        <div class="current-turn" id="inter-turn">Bereit</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="team-btn active" data-team="juve" id="btn-juve">Juve schiesst</button>
+      <button class="team-btn" data-team="inter" id="btn-inter">Inter schiesst</button>
+      <button id="reset-btn">Neues Spiel</button>
+    </div>
+
+    <p class="hint">
+      Tipp: Triff den Bereich zwischen den weissen Linien in der Leiste, um mit hoher Chance ein Tor zu machen.
+    </p>
+
+    <div class="winner-banner" id="winner-banner"></div>
+  </div>
+
+  <script>
+    const maxShotsPerTeam = 5;
+
+    const state = {
+      currentTeam: "juve",
+      scores: { juve: 0, inter: 0 },
+      shots: { juve: 0, inter: 0 },
+      power: 0,
+      powerDirection: 1,
+      powerInterval: null,
+      isPowerRunning: false,
+      gameOver: false
+    };
+
+    const scoreText = document.getElementById("score-text");
+    const roundInfo = document.getElementById("round-info");
+    const goalMessage = document.getElementById("goal-message");
+    const powerFill = document.getElementById("power-fill");
+    const shootBtn = document.getElementById("shoot-btn");
+    const resetBtn = document.getElementById("reset-btn");
+    const btnJuve = document.getElementById("btn-juve");
+    const btnInter = document.getElementById("btn-inter");
+    const juveCard = document.getElementById("juve-card");
+    const interCard = document.getElementById("inter-card");
+    const juveTurn = document.getElementById("juve-turn");
+    const interTurn = document.getElementById("inter-turn");
+    const winnerBanner = document.getElementById("winner-banner");
+    const keeper = document.getElementById("keeper");
+    const ball = document.getElementById("ball");
+
+    function updateUI() {
+      scoreText.textContent = state.scores.juve + " : " + state.scores.inter;
+
+      const totalShots = state.shots.juve + state.shots.inter;
+      const maxTotalShots = maxShotsPerTeam * 2;
+      roundInfo.textContent = "Schuss " + (totalShots + 1) + " von " + maxTotalShots;
+
+      btnJuve.classList.toggle("active", state.currentTeam === "juve");
+      btnInter.classList.toggle("active", state.currentTeam === "inter");
+
+      juveCard.classList.toggle("active", state.currentTeam === "juve");
+      interCard.classList.toggle("active", state.currentTeam === "inter");
+
+      juveTurn.textContent = state.currentTeam === "juve" ? "Am Schuss" : "Wartet";
+      interTurn.textContent = state.currentTeam === "inter" ? "Am Schuss" : "Wartet";
+
+      if (state.gameOver) {
+        shootBtn.disabled = true;
+        btnJuve.disabled = true;
+        btnInter.disabled = true;
+        showWinner();
+      } else {
+        shootBtn.disabled = false;
+        btnJuve.disabled = state.shots.juve >= maxShotsPerTeam;
+        btnInter.disabled = state.shots.inter >= maxShotsPerTeam;
+      }
+    }
+
+    function resetAnimation() {
+      keeper.style.transform = "translate(-50%, -50%)";
+      ball.style.bottom = "-18px";
+      ball.style.left = "50%";
+    }
+
+    function startPowerBar() {
+      if (state.isPowerRunning || state.gameOver) return;
+      state.isPowerRunning = true;
+      state.powerDirection = 1;
+      state.power = 0;
+      powerFill.style.width = "0%";
+      goalMessage.textContent = "";
+      goalMessage.className = "goal-message";
+      resetAnimation();
+
+      state.powerInterval = setInterval(() => {
+        state.power += state.powerDirection * 2.4;
+        if (state.power >= 100) {
+          state.power = 100;
+          state.powerDirection = -1;
+        } else if (state.power <= 0) {
+          state.power = 0;
+          state.powerDirection = 1;
+        }
+        powerFill.style.width = state.power + "%";
+      }, 25);
+    }
+
+    function stopPowerBarAndShoot() {
+      if (!state.isPowerRunning || state.gameOver) return;
+
+      clearInterval(state.powerInterval);
+      state.isPowerRunning = false;
+
+      const power = state.power;
+      const sweetSpotMin = 40;
+      const sweetSpotMax = 60;
+
+      const keeperSide = Math.random();
+      if (keeperSide < 0.33) {
+        keeper.style.transform = "translate(-120%, -50%)";
+      } else if (keeperSide < 0.66) {
+        keeper.style.transform = "translate(20%, -50%)";
+      } else {
+        keeper.style.transform = "translate(-50%, -80%)";
+      }
+
+      if (power < 50) {
+        ball.style.left = "20%";
+      } else {
+        ball.style.left = "80%";
+      }
+      ball.style.bottom = "54px";
+
+      let result;
+      let message;
+      let cssClass;
+
+      const inSweetSpot = power >= sweetSpotMin && power <= sweetSpotMax;
+
+      if (inSweetSpot) {
+        const goalChance = 0.85;
+        if (Math.random() < goalChance) {
+          result = "goal";
+          message = "Tooor für " + (state.currentTeam === "juve" ? "Juve" : "Inter") + "!";
+          cssClass = "goal";
+        } else {
+          result = "save";
+          message = "Herausragende Parade vom Goalie!";
+          cssClass = "save";
+        }
+      } else {
+        if (power < 15 || power > 85) {
+          result = "miss";
+          message = "Daneben, der fliegt ins Out!";
+          cssClass = "miss";
+        } else {
+          const goalChance = 0.4;
+          if (Math.random() < goalChance) {
+            result = "goal";
+            message = "Tor, wenn auch etwas glucklich!";
+            cssClass = "goal";
+          } else {
+            result = "save";
+            message = "Der Torwart hat ihn!";
+            cssClass = "save";
+          }
+        }
+      }
+
+      if (result === "goal") {
+        state.scores[state.currentTeam] += 1;
+      }
+      state.shots[state.currentTeam] += 1;
+
+      goalMessage.textContent = message;
+      goalMessage.className = "goal-message " + cssClass;
+
+      const juveLeft = maxShotsPerTeam - state.shots.juve;
+      const interLeft = maxShotsPerTeam - state.shots.inter;
+      const diff = state.scores.juve - state.scores.inter;
+
+      if (juveLeft < Math.abs(diff) || interLeft < Math.abs(diff)) {
+        state.gameOver = true;
+      } else if (state.shots.juve >= maxShotsPerTeam && state.shots.inter >= maxShotsPerTeam) {
+        state.gameOver = true;
+      }
+
+      if (!state.gameOver) {
+        if (state.currentTeam === "juve" && state.shots.inter < maxShotsPerTeam) {
+          state.currentTeam = "inter";
+        } else if (state.currentTeam === "inter" && state.shots.juve < maxShotsPerTeam) {
+          state.currentTeam = "juve";
+        } else if (state.shots.juve < maxShotsPerTeam) {
+          state.currentTeam = "juve";
+        } else if (state.shots.inter < maxShotsPerTeam) {
+          state.currentTeam = "inter";
+        }
+      }
+
+      setTimeout(() => {
+        resetAnimation();
+        updateUI();
+      }, 350);
+    }
+
+    function showWinner() {
+      if (state.scores.juve > state.scores.inter) {
+        winnerBanner.textContent = "Juve gewinnt das Elfmeterschiessen!";
+        winnerBanner.className = "winner-banner juve";
+      } else if (state.scores.inter > state.scores.juve) {
+        winnerBanner.textContent = "Inter gewinnt das Elfmeterschiessen!";
+        winnerBanner.className = "winner-banner inter";
+      } else {
+        winnerBanner.textContent = "Unentschieden nach dem Elfmeterschiessen.";
+        winnerBanner.className = "winner-banner draw";
+      }
+    }
+
+    function resetGame() {
+      clearInterval(state.powerInterval);
+      state.currentTeam = "juve";
+      state.scores.juve = 0;
+      state.scores.inter = 0;
+      state.shots.juve = 0;
+      state.shots.inter = 0;
+      state.power = 0;
+      state.powerDirection = 1;
+      state.isPowerRunning = false;
+      state.gameOver = false;
+      powerFill.style.width = "0%";
+      goalMessage.textContent = "";
+      goalMessage.className = "goal-message";
+      winnerBanner.textContent = "";
+      winnerBanner.className = "winner-banner";
+      resetAnimation();
+      updateUI();
+      startPowerBar();
+    }
+
+    shootBtn.addEventListener("click", () => {
+      if (state.isPowerRunning) {
+        stopPowerBarAndShoot();
+      } else if (!state.gameOver) {
+        startPowerBar();
+      }
+    });
+
+    btnJuve.addEventListener("click", () => {
+      if (state.shots.juve >= maxShotsPerTeam || state.gameOver) return;
+      state.currentTeam = "juve";
+      updateUI();
+    });
+
+    btnInter.addEventListener("click", () => {
+      if (state.shots.inter >= maxShotsPerTeam || state.gameOver) return;
+      state.currentTeam = "inter";
+      updateUI();
+    });
+
+    resetBtn.addEventListener("click", resetGame);
+
+    updateUI();
+    startPowerBar();
+  </script>
 </body>
 </html>
